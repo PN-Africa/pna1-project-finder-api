@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# dev files
+dev-only/
+
+# Environment and local configs
+.env
+*.sqlite3
+
+# Uploaded media files
+media/
