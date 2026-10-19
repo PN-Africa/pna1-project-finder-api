@@ -105,7 +105,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Production email configuration using Django 6 MAILERS setting
-_prod_email_backend = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+_prod_email_backend = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 MAILERS = {
     'default': {
         'BACKEND': _prod_email_backend,
