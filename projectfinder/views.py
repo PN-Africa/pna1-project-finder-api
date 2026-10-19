@@ -206,3 +206,10 @@ class PasswordResetConfirmRedirectView(View):
         # Re-encode body as JSON and delegate
         request._body = json.dumps(data).encode('utf-8')
         return PasswordResetConfirmView.as_view()(request, *args, **kwargs)
+
+
+def health_check(request):
+    """
+    Health check endpoint for Docker, AWS, Render, Fly.io, and load balancer probes.
+    """
+    return JsonResponse({'status': 'healthy', 'service': 'project-finder'})

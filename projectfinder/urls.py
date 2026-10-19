@@ -22,9 +22,11 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-from projectfinder.views import PasswordResetConfirmRedirectView
+from projectfinder.views import PasswordResetConfirmRedirectView, health_check
 
 urlpatterns = [
+    path('healthz/', health_check, name='healthz'),
+    path('api/health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path(
         'password-reset/confirm/<str:uidb64>/<str:token>/',
