@@ -16,26 +16,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
 
-from projectfinder.views import PasswordResetConfirmRedirectView, health_check
+from accounts.views import PasswordResetConfirmRedirectView
+from core.views import health_check
 
 urlpatterns = [
-    path('healthz/', health_check, name='healthz'),
-    path('api/health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path(
         'password-reset/confirm/<str:uidb64>/<str:token>/',
         PasswordResetConfirmRedirectView.as_view(),
         name='password_reset_confirm',
     ),
+    path('healthz/', health_check, name='healthz'),
+
+    path('api/health/', health_check, name='health_check'),
     path('api/auth/', include('dj_rest_auth.urls')),
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
-    # OpenAPI & API Documentation
+   
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
