@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    # Third-party apps
+    
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'drf_spectacular',
+
+    'accounts',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -91,12 +94,12 @@ if database_url:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
-            'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
+            'ENGINE': os.getenv('DB_ENGINE'),
+            'NAME': os.getenv('DB_NAME'),
             'USER': os.getenv('DB_USER'),
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT', ''),
+            'PORT': os.getenv('DB_PORT'),
         }
     }
 
@@ -135,6 +138,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 SITE_ID = 1
 
+AUTH_USER_MODEL = 'accounts.User'
+
 # Django REST Framework
 # https://www.django-rest-framework.org/
 REST_FRAMEWORK = {
@@ -142,14 +147,6 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ],
-}
-
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'Project Finder API',
-    'DESCRIPTION': 'API documentation for Project Finder (PNA 1) simulation platform backend.',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 REST_AUTH = {
@@ -160,7 +157,12 @@ REST_AUTH = {
     'JWT_AUTH_SECURE': False,
     'JWT_AUTH_SAMESITE': 'Lax',
     'JWT_AUTH_RETURN_EXPIRATION': True,
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
+    'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
+    'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
 }
+
+ACCOUNT_LOGIN_METHODS = {'email'}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=55),
@@ -169,6 +171,13 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Project Finder API',
+    'DESCRIPTION': 'API documentation for Project Finder (PNA 1) simulation platform backend.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
 
 LOG_LEVEL = os.environ.get("DJANGO_LOG_LEVEL", "INFO").upper()
 
