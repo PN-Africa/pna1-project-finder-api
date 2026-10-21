@@ -6,18 +6,24 @@ from .common import *
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1]').split(',')
-    if h.strip()
-]
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+    }
+}
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+   
 # CORS Configuration
-# https://github.com/adamchainz/django-cors-headers
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# Development email uses console backend configured in MAILERS
 MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
