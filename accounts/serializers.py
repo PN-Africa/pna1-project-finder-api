@@ -70,7 +70,6 @@ class CustomRegisterSerializer(RegisterSerializer):
     def validate_email(self, email):
         validated_email = super().validate_email(email)
 
-        print('custom validate')
         if UserModel.objects.filter(email=validated_email).exists():
             raise serializers.ValidationError(
                 'User is already registered with this e-mail address.'

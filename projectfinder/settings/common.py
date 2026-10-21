@@ -163,6 +163,7 @@ REST_AUTH = {
 # Django Allauth
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 
 # Django Rest Framework Simple JWT
 SIMPLE_JWT = {
