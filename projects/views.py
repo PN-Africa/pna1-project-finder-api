@@ -8,7 +8,7 @@ from drf_spectacular.utils import extend_schema
 
 
 from .models import Project, Simulation
-from .serializers import ProjectCreateSerializer, ProjectListSerializer, ProjectDetailSerializer, ProjectPublicDetailSerializer, ProjectPublicListSerializer
+from .serializers import ProjectCreateSerializer, ProjectListSerializer, ProjectDetailSerializer, ProjectPublicDetailSerializer, ProjectPublicListSerializer, SimulationCreateSerializer, SimulationDetailSerializer, SimulationListSerializer
 
 
 class ProjectViewSet(RetrieveModelMixin,
@@ -95,9 +95,70 @@ class ProjectViewSet(RetrieveModelMixin,
         return Response(serializer.data)
 
 
+class SimulationViewSet(ListModelMixin,
+                        RetrieveModelMixin,
+                        CreateModelMixin,
+                        GenericViewSet):
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Simulation.objects.filter(user=self.request.user) \
+            .select_related('project') \
+            .prefetch_related(
+                'project__stakeholders',
+                'project__tasks',
+                'project__deliverables',
+            )
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SimulationCreateSerializer
 
+        if self.action == 'list':
+            return SimulationListSerializer
 
+        if self.action == 'retrieve':
+            return SimulationDetailSerializer
+    
+    @extend_schema(
+        description=(
+            "Starts a simulation on the provided project's ID"
+            "for the current user."
+        ),
+        responses={201: SimulationDetailSerializer},
+    )
+    def create(self, request, *args, **kwargs):
+        create_serializer = self.get_serializer(
+            data=request.data,
+            context={'user': request.user}
+        )
+        create_serializer.is_valid(raise_exception=True)
+        simulation = create_serializer.save()
+
+        return_serializer = SimulationDetailSerializer(simulation)
+        headers = self.get_success_headers(return_serializer.data)
+        return Response(
+            return_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    @extend_schema(
+        description=(
+            "Returns all simulations (in progess and submitted) "
+            "for the current user."
+        )
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        description=(
+            "Returns a specific simulation for the current user"
+        )
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
     
     
         

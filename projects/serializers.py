@@ -2,7 +2,7 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from .models import Deliverable, Project, Stakeholder, Task
+from .models import Deliverable, Project, Simulation, Stakeholder, Task
 
 
 public_project_fields = [
@@ -134,3 +134,61 @@ class ProjectDetailSerializer(ProjectPublicDetailSerializer):
             *ProjectPublicDetailSerializer.Meta.fields,
             'is_published',
         ]
+
+
+class SimulationCreateSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField(required=True)
+
+    def validate_project_id(self, project_id):
+        user = self.context['user']
+        has_existing_simulation = Simulation.objects.filter(
+            user=user,
+            project_id=project_id
+        ).exists()
+
+        if has_existing_simulation:
+            raise serializers.ValidationError(
+                "The current user already has a simulation for the "
+                "referenced project"
+            )
+
+        is_unpublished_project = Project.objects.filter(
+            id=project_id,
+            is_published=False,
+        ).exists()
+
+        if is_unpublished_project:
+            raise serializers.ValidationError(
+                "Invalid project id."
+            )
+
+        return project_id
+
+    def create(self, validated_data):
+        return Simulation.objects.create(
+            project_id=validated_data['project_id'],
+            user=self.context['user'],
+        )
+
+
+class SimulationListSerializer(serializers.ModelSerializer):
+    project = ProjectPublicListSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
+
+    class Meta:
+        model = Simulation
+        fields = [
+            'id',
+            'project',
+            'user_id',
+            'status',
+            'started_at',
+            'submitted_at',
+        ]
+
+
+class SimulationDetailSerializer(SimulationListSerializer):
+    project = ProjectPublicDetailSerializer(read_only=True)
+
+    
+            
