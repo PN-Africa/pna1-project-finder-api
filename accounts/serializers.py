@@ -64,8 +64,8 @@ class CustomLoginSerializer(LoginSerializer):
 
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(max_length=150, required=True, allow_blank=False)
-    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    professional_role = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=False)
+    professional_role = serializers.CharField(max_length=150, required=False, allow_blank=False)
 
     def validate_email(self, email):
         validated_email = super().validate_email(email)
