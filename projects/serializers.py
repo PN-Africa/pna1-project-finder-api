@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 
 from rest_framework import serializers
 
@@ -191,4 +192,43 @@ class SimulationDetailSerializer(SimulationListSerializer):
     project = ProjectPublicDetailSerializer(read_only=True)
 
     
-            
+class SimulationSubmitSerializer(serializers.Serializer):
+    def update(self, instance, validated_data):
+        if instance.submitted_at is not None:
+            raise serializers.ValidationError(
+                {'detail': 'Simulation has already been submitted.'}
+            )
+
+        # validate deliverables have been submitted -- yet to be done
+
+        instance.submitted_at = timezone.now()
+        instance.status = Simulation.Status.SUBMITTED
+        instance.save()
+
+        return instance
+
+
+class SimulationSubmitResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Simulation
+        fields = [
+            'id',
+            'project_id',
+            'user_id',
+            'status',
+            'started_at',
+            'submitted_at'
+        ]
+
+
+class ChoiceSerializer(serializers.Serializer):
+    value = serializers.CharField()
+    label = serializers.CharField()
+
+class ChoicesResponseSerializer(serializers.Serializer):
+    project_industries = serializers.ListField(
+        child=ChoiceSerializer()
+    )
+    project_difficulty_levels = serializers.ListField(
+        child=ChoiceSerializer()
+    )

@@ -8,7 +8,7 @@ from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-from .models import Project, Simulation
+from .models import Project, Simulation, get_choices
 from .pagination import CustomPageNumberPagination
 from .filters import AvailableProjectFilter, ProjectFilter, SimulationFilter
 from .serializers import (
@@ -19,7 +19,10 @@ from .serializers import (
     ProjectPublicListSerializer,
     SimulationCreateSerializer,
     SimulationDetailSerializer,
-    SimulationListSerializer
+    SimulationListSerializer,
+    SimulationSubmitSerializer,
+    SimulationSubmitResponseSerializer,
+    ChoicesResponseSerializer,
 )
 
 
@@ -54,6 +57,8 @@ class ProjectViewSet(RetrieveModelMixin,
 
         if self.action == 'available':
             return ProjectPublicListSerializer
+
+        return ProjectPublicListSerializer
 
     def get_permissions(self):
         if self.action == 'retrieve' or self.action == 'available':
@@ -125,6 +130,24 @@ class ProjectViewSet(RetrieveModelMixin,
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        description=(
+            "Returns information about the project industry and difficulty "
+            "level string choices accepted by the API."
+        ),
+        responses={200: ChoicesResponseSerializer}
+    )
+    @action(methods=['GET'], detail=False)
+    def choices(self, request):
+        return Response(
+            {
+                'project_industries': get_choices(Project.Industry.choices),
+                'project_difficulty_levels': get_choices(
+                    Project.DifficultyLevel.choices,
+                )
+            }
+        )
+
 
 class SimulationViewSet(ListModelMixin,
                         RetrieveModelMixin,
@@ -155,6 +178,9 @@ class SimulationViewSet(ListModelMixin,
 
         if self.action == 'retrieve':
             return SimulationDetailSerializer
+
+        if self.action == 'submit':
+            return SimulationSubmitSerializer
     
     @extend_schema(
         description=(
@@ -195,6 +221,29 @@ class SimulationViewSet(ListModelMixin,
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        description="Submit the simulation referenced in the url path",
+        responses={200: SimulationSubmitResponseSerializer}
+    )
+    @action(methods=['POST'], detail=True)
+    def submit(self, request, pk=None):
+        instance = self.get_object()
+        submit_serializer = self.get_serializer(
+            instance,
+            data=request.data,
+        )
+
+        submit_serializer.is_valid(raise_exception=True)
+        simulation = submit_serializer.save()
+
+        return_serializer = SimulationSubmitResponseSerializer(simulation)
+        headers = self.get_success_headers(return_serializer.data)
+        return Response(
+            return_serializer.data,
+            status=status.HTTP_200_OK,
+            headers=headers
+        )
     
     
         

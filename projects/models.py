@@ -4,6 +4,13 @@ from django.conf import settings
 from core.models import BaseModel
 
 
+def get_choices(choices):
+    return [
+        {'value': value, 'label': label}
+        for value, label in choices
+    ]
+
+
 class Project(BaseModel):
     class DifficultyLevel(models.TextChoices):
         BEGINNER = 'beginner', 'Beginner'
