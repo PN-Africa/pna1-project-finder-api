@@ -5,16 +5,34 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 from .models import Project, Simulation
-from .serializers import ProjectCreateSerializer, ProjectListSerializer, ProjectDetailSerializer, ProjectPublicDetailSerializer, ProjectPublicListSerializer, SimulationCreateSerializer, SimulationDetailSerializer, SimulationListSerializer
+from .pagination import CustomPageNumberPagination
+from .filters import AvailableProjectFilter, ProjectFilter, SimulationFilter
+from .serializers import (
+    ProjectCreateSerializer,
+    ProjectListSerializer,
+    ProjectDetailSerializer,
+    ProjectPublicDetailSerializer,
+    ProjectPublicListSerializer,
+    SimulationCreateSerializer,
+    SimulationDetailSerializer,
+    SimulationListSerializer
+)
 
 
 class ProjectViewSet(RetrieveModelMixin,
                      ListModelMixin,
                      CreateModelMixin,
                      GenericViewSet):
+    
+    pagination_class = CustomPageNumberPagination
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProjectFilter
+
     def get_queryset(self):
         if not self.request.user.is_staff:
             return Project.objects.filter(is_published=True)
@@ -83,15 +101,28 @@ class ProjectViewSet(RetrieveModelMixin,
         ),
         responses={200: ProjectPublicListSerializer(many=True)}
     )
-    @action(methods=['GET'], detail=False)
+    @action(
+        methods=['GET'],
+        detail=False,
+        filterset_class=AvailableProjectFilter
+    )
     def available(self, request):
+        # build queryset
         simulations = Simulation.objects.filter(user=request.user)
         simulated_project_ids = [s.project_id for s in simulations]
         published_projects = self.get_queryset() \
             .filter(is_published=True) \
             .exclude(id__in=simulated_project_ids)
 
-        serializer = self.get_serializer(published_projects, many=True)
+        queryset = self.filter_queryset(published_projects)
+
+        # build and return response
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -99,7 +130,12 @@ class SimulationViewSet(ListModelMixin,
                         RetrieveModelMixin,
                         CreateModelMixin,
                         GenericViewSet):
+    
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPageNumberPagination
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SimulationFilter
 
     def get_queryset(self):
         return Simulation.objects.filter(user=self.request.user) \
@@ -122,7 +158,7 @@ class SimulationViewSet(ListModelMixin,
     
     @extend_schema(
         description=(
-            "Starts a simulation on the provided project's ID"
+            "Creates/starts a simulation on the provided project's ID "
             "for the current user."
         ),
         responses={201: SimulationDetailSerializer},
