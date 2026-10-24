@@ -78,10 +78,14 @@ class CustomRegisterSerializer(RegisterSerializer):
         return email
 
     def custom_signup(self, request, user):
-        user.first_name = self.validated_data.get('first_name', None)
-        user.last_name = self.validated_data.get('last_name', None)
-        user.professional_role = self.validated_data.get('professional_role', None)
+        try:
+            user.first_name = self.validated_data.get('first_name', '')
+            user.last_name = self.validated_data.get('last_name', '')
+            user.professional_role = self.validated_data.get('professional_role', '')
 
-        user.save()
+            user.save()
+        except Exception as exc:
+            user.delete()
+            raise exc
 
         return user
