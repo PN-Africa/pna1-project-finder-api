@@ -8,8 +8,8 @@ from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 
 
+from core.pagination import CustomPageNumberPagination
 from .models import Project, Simulation, get_choices
-from .pagination import CustomPageNumberPagination
 from .filters import ProjectFilter, ProjectAdminFilter, SimulationAdminFilter, SimulationFilter
 from .serializers import (
     ProjectCreateSerializer,
@@ -274,6 +274,7 @@ class SimulationAdminViewSet(ListModelMixin,
     serializer_class = SimulationAdminSerializer
     permission_classes = [IsAdminUser]
 
+    pagination_class = CustomPageNumberPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = SimulationAdminFilter
 

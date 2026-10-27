@@ -7,11 +7,11 @@ from django.db.models import Prefetch
 
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.permissions import IsAdminUser
 from dj_rest_auth.views import PasswordResetConfirmView
 from drf_spectacular.utils import extend_schema
 
-from projects.models import Simulation
-
+from core.pagination import CustomPageNumberPagination
 from .serializers import UserAdminListSerializer
 
 
@@ -236,6 +236,8 @@ class UserViewSet(ListModelMixin,
         # ) \
     
     serializer_class = UserAdminListSerializer
+    permission_classes = [IsAdminUser]
+    pagination_class = CustomPageNumberPagination
     
     # def get_serializer_class(self):
     #     if self.action == 'list':
