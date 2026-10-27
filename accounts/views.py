@@ -2,10 +2,20 @@ import json
 
 from django.http import JsonResponse, HttpResponse
 from django.views import View
+from django.contrib.auth import get_user_model
 
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from dj_rest_auth.views import PasswordResetConfirmView
+from drf_spectacular.utils import extend_schema
+
+from .serializers import UserAdminListSerializer
 
 
+UserModel = get_user_model()
+
+
+# To be removed
 class PasswordResetConfirmRedirectView(View):
     """
     Handles the named 'password_reset_confirm' pattern required by dj-rest-auth / Django
@@ -208,3 +218,26 @@ class PasswordResetConfirmRedirectView(View):
         # Re-encode body as JSON and delegate
         request._body = json.dumps(data).encode('utf-8')
         return PasswordResetConfirmView.as_view()(request, *args, **kwargs)
+
+
+class UserViewSet(ListModelMixin,
+                  RetrieveModelMixin,
+                  GenericViewSet):
+    
+    queryset = UserModel.objects \
+        .prefetch_related('simulations') \
+        .all()
+    
+    serializer_class = UserAdminListSerializer
+
+    @extend_schema(
+        description="Return a user's details and simulation history"
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        description="Returns list of users with their simulation activity"
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

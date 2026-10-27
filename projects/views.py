@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Project, Simulation, get_choices
 from .pagination import CustomPageNumberPagination
-from .filters import AvailableProjectFilter, ProjectFilter, SimulationFilter
+from .filters import ProjectFilter, ProjectAdminFilter, SimulationFilter
 from .serializers import (
     ProjectCreateSerializer,
     ProjectListSerializer,
@@ -25,76 +25,39 @@ from .serializers import (
     ChoicesResponseSerializer,
 )
 
-
+# handles regular user actions for projects
 class ProjectViewSet(RetrieveModelMixin,
                      ListModelMixin,
-                     CreateModelMixin,
                      GenericViewSet):
     
+    permission_classes = [IsAuthenticated]
     pagination_class = CustomPageNumberPagination
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProjectFilter
 
     def get_queryset(self):
-        if not self.request.user.is_staff:
-            return Project.objects.filter(is_published=True)
-        
-        return Project.objects.all()
+        simulations = Simulation.objects.filter(user=self.request.user)
+        simulated_project_ids = [s.project_id for s in simulations]
+
+        return Project.objects \
+            .filter(is_published=True) \
+            .exclude(id__in=simulated_project_ids)
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return ProjectListSerializer
-    
-        if self.action == 'create':
-            return ProjectCreateSerializer
-
-        if self.action == 'retrieve':
-            if not self.request.user.is_staff:
-                return ProjectPublicDetailSerializer
-            
-            return ProjectDetailSerializer
-
-        if self.action == 'available':
             return ProjectPublicListSerializer
 
-        return ProjectPublicListSerializer
+        if self.action == 'retrieve':
+            return ProjectPublicDetailSerializer
 
-    def get_permissions(self):
-        if self.action == 'retrieve' or self.action == 'available':
-            return [IsAuthenticated()]
-        
-        return [IsAdminUser()]
-
-    @extend_schema(
-        description=("Returns all projects (published and unpublished) "
-                     "to an admin user")
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        # return ProjectPublicListSerializer
 
     @extend_schema(
         description=("Returns a specific project to an authenticated user")
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
-
-    @extend_schema(
-        description=("Creates a project. This action is reserved for admin users"),
-        responses={201: ProjectDetailSerializer},
-    )
-    def create(self, request, *args, **kwargs):
-        create_serializer = self.get_serializer(data=request.data)
-        create_serializer.is_valid(raise_exception=True)
-        project = create_serializer.save()
-
-        return_serializer = ProjectDetailSerializer(project)
-        headers = self.get_success_headers(return_serializer.data)
-        return Response(
-            return_serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
     
     @extend_schema(
         description=(
@@ -106,29 +69,26 @@ class ProjectViewSet(RetrieveModelMixin,
         ),
         responses={200: ProjectPublicListSerializer(many=True)}
     )
-    @action(
-        methods=['GET'],
-        detail=False,
-        filterset_class=AvailableProjectFilter
-    )
-    def available(self, request):
-        # build queryset
-        simulations = Simulation.objects.filter(user=request.user)
-        simulated_project_ids = [s.project_id for s in simulations]
-        published_projects = self.get_queryset() \
-            .filter(is_published=True) \
-            .exclude(id__in=simulated_project_ids)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
-        queryset = self.filter_queryset(published_projects)
+        # # build queryset
+        # simulations = Simulation.objects.filter(user=request.user)
+        # simulated_project_ids = [s.project_id for s in simulations]
+        # published_projects = self.get_queryset() \
+        #     .filter(is_published=True) \
+        #     .exclude(id__in=simulated_project_ids)
 
-        # build and return response
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        # queryset = self.filter_queryset(published_projects)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # # build and return response
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     serializer = self.get_serializer(page, many=True)
+        #     return self.get_paginated_response(serializer.data)
+
+        # serializer = self.get_serializer(queryset, many=True)
+        # return Response(serializer.data)
 
     @extend_schema(
         description=(
@@ -149,6 +109,65 @@ class ProjectViewSet(RetrieveModelMixin,
         )
 
 
+# handles admin actions for projects
+class ProjectAdminViewSet(ListModelMixin,
+                          RetrieveModelMixin,
+                          CreateModelMixin,
+                          GenericViewSet):
+    
+    queryset = Project.objects.all()
+    permission_classes = [IsAdminUser]
+    pagination_class = CustomPageNumberPagination
+    
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProjectAdminFilter
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProjectListSerializer
+    
+        if self.action == 'create':
+            return ProjectCreateSerializer
+
+        if self.action == 'retrieve':
+            return ProjectDetailSerializer
+
+        # return ProjectPublicListSerializer
+    
+    @extend_schema(
+        description=(
+            "Returns all projects (published and unpublished) "
+            "to an admin user"
+        )
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        description=("Returns a specific project to an admin user")
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        description=("Creates a project. This action is reserved for admin users"),
+        responses={201: ProjectDetailSerializer},
+    )
+    def create(self, request, *args, **kwargs):
+        create_serializer = self.get_serializer(data=request.data)
+        create_serializer.is_valid(raise_exception=True)
+        project = create_serializer.save()
+
+        return_serializer = ProjectDetailSerializer(project)
+        headers = self.get_success_headers(return_serializer.data)
+        return Response(
+            return_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+
+# handles regular user actions for simulations
 class SimulationViewSet(ListModelMixin,
                         RetrieveModelMixin,
                         CreateModelMixin,
@@ -246,4 +265,13 @@ class SimulationViewSet(ListModelMixin,
         )
     
     
-        
+# handles admin action for simulations
+# class SimulationAdminViewSet(ListModelMixin,
+#                              RetrieveModelMixin,
+#                              GenericViewSet):
+#     queryset = Simulation.objects.all()
+#     permission_classes = [IsAdminUser]
+
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_class = None
+

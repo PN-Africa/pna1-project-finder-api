@@ -4,6 +4,8 @@ from rest_framework import serializers
 from dj_rest_auth.serializers import LoginSerializer, UserDetailsSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
 
+from projects.models import Simulation
+
 
 UserModel = get_user_model()
 
@@ -89,3 +91,23 @@ class CustomRegisterSerializer(RegisterSerializer):
             raise exc
 
         return user
+
+
+class UserAdminListSerializer(CustomUserDetailsSerializer):
+    simulations_started = serializers.SerializerMethodField()
+    simulations_submitted = serializers.SerializerMethodField()
+
+    def get_simulations_started(self, instance) -> int:
+        return instance.simulations.count()
+
+    def get_simulations_submitted(self, instance) -> int:
+        return instance.simulations \
+            .filter(status=Simulation.Status.SUBMITTED) \
+            .count()
+
+    class Meta(CustomUserDetailsSerializer.Meta):
+        fields = [
+            *CustomUserDetailsSerializer.Meta.fields,
+            'simulations_started',
+            'simulations_submitted',
+        ]

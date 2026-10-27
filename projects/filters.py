@@ -3,7 +3,7 @@ import django_filters
 from projects.models import Simulation
 
 
-class AvailableProjectFilter(django_filters.FilterSet):
+class ProjectFilter(django_filters.FilterSet):
     industry = django_filters.CharFilter(
         field_name='industry',
         lookup_expr='iexact'
@@ -14,7 +14,7 @@ class AvailableProjectFilter(django_filters.FilterSet):
     )
 
 
-class ProjectFilter(django_filters.FilterSet):
+class ProjectAdminFilter(django_filters.FilterSet):
     industry = django_filters.CharFilter(
         field_name='industry',
         lookup_expr='iexact'
