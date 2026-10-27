@@ -10,13 +10,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Project, Simulation, get_choices
 from .pagination import CustomPageNumberPagination
-from .filters import ProjectFilter, ProjectAdminFilter, SimulationFilter
+from .filters import ProjectFilter, ProjectAdminFilter, SimulationAdminFilter, SimulationFilter
 from .serializers import (
     ProjectCreateSerializer,
     ProjectListSerializer,
     ProjectDetailSerializer,
     ProjectPublicDetailSerializer,
     ProjectPublicListSerializer,
+    SimulationAdminSerializer,
     SimulationCreateSerializer,
     SimulationDetailSerializer,
     SimulationListSerializer,
@@ -266,12 +267,31 @@ class SimulationViewSet(ListModelMixin,
     
     
 # handles admin action for simulations
-# class SimulationAdminViewSet(ListModelMixin,
-#                              RetrieveModelMixin,
-#                              GenericViewSet):
-#     queryset = Simulation.objects.all()
-#     permission_classes = [IsAdminUser]
+class SimulationAdminViewSet(ListModelMixin,
+                             RetrieveModelMixin,
+                             GenericViewSet):
+    queryset = Simulation.objects.select_related('user', 'project').all()
+    serializer_class = SimulationAdminSerializer
+    permission_classes = [IsAdminUser]
 
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SimulationAdminFilter
+
+    @extend_schema(
+        description=(
+            "Returns all simulations to an admin user"
+        )
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        description=(
+            "Returns a specific simulation to an admin user"
+        )
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+
 

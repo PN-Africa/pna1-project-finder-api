@@ -38,3 +38,10 @@ class SimulationFilter(django_filters.FilterSet):
         field_name='project__difficulty_level',
         lookup_expr='iexact'
     )
+
+
+class SimulationAdminFilter(django_filters.FilterSet):
+    user_id = django_filters.UUIDFilter(
+        field_name='user__id',
+        lookup_expr='exact',
+    )

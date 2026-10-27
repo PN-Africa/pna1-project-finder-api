@@ -3,6 +3,8 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
+from accounts.serializers import UserAdminListSerializer
+
 from .models import Deliverable, Project, Simulation, Stakeholder, Task
 
 
@@ -175,6 +177,10 @@ class SimulationCreateSerializer(serializers.Serializer):
 class SimulationListSerializer(serializers.ModelSerializer):
     project = ProjectPublicListSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
+    submitted_deliverables_count = serializers.SerializerMethodField()
+
+    def get_submitted_deliverables_count(self, instance) -> int:
+        return instance.deliverable_submissions.count()
 
     class Meta:
         model = Simulation
@@ -185,6 +191,7 @@ class SimulationListSerializer(serializers.ModelSerializer):
             'status',
             'started_at',
             'submitted_at',
+            'submitted_deliverables_count',
         ]
 
 
@@ -232,3 +239,13 @@ class ChoicesResponseSerializer(serializers.Serializer):
     project_difficulty_levels = serializers.ListField(
         child=ChoiceSerializer()
     )
+
+
+class SimulationAdminSerializer(SimulationListSerializer):
+    user = UserAdminListSerializer(read_only=True)
+
+    class Meta(SimulationListSerializer.Meta):
+        parent_fields = [*SimulationListSerializer.Meta.fields]
+        f = [field for field in parent_fields if field != 'user_id']
+
+        fields = [*f, 'user']

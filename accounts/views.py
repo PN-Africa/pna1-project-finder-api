@@ -3,11 +3,14 @@ import json
 from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from dj_rest_auth.views import PasswordResetConfirmView
 from drf_spectacular.utils import extend_schema
+
+from projects.models import Simulation
 
 from .serializers import UserAdminListSerializer
 
@@ -224,11 +227,22 @@ class UserViewSet(ListModelMixin,
                   RetrieveModelMixin,
                   GenericViewSet):
     
-    queryset = UserModel.objects \
-        .prefetch_related('simulations') \
-        .all()
+    queryset = UserModel.objects.all()
+        # .prefetch_related(
+        #     Prefetch(
+        #         'simulations',
+        #         queryset=Simulation.objects.select_related('project').all()
+        #     )
+        # ) \
     
     serializer_class = UserAdminListSerializer
+    
+    # def get_serializer_class(self):
+    #     if self.action == 'list':
+    #         return UserAdminListSerializer
+
+    #     if self.action == 'retrieve':
+    #         return UserAdminDetailSerializer
 
     @extend_schema(
         description="Return a user's details and simulation history"
@@ -241,3 +255,5 @@ class UserViewSet(ListModelMixin,
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+

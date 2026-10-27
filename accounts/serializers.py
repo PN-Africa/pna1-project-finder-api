@@ -111,3 +111,13 @@ class UserAdminListSerializer(CustomUserDetailsSerializer):
             'simulations_started',
             'simulations_submitted',
         ]
+
+
+# class UserAdminDetailSerializer(CustomUserDetailsSerializer):
+#     # simulations = SimulationListSerializer(many=True, read_only=True)
+
+#     class Meta(CustomUserDetailsSerializer.Meta):
+#         fields = [
+#             *CustomUserDetailsSerializer.Meta.fields,
+#             # 'simulations',
+#         ]
