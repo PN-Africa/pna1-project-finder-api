@@ -222,6 +222,23 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         return instance
 
 
+# admin - publish/unpublished
+class ProjectStatusSerializer(serializers.ModelSerializer):
+    def validate_is_published(self, value):
+        status_verb = 'published' if value else 'unpublished'
+
+        if self.instance.is_published == value:
+            raise serializers.ValidationError(
+                f"The project is already {status_verb}"
+            )
+
+        return value
+
+    class Meta:
+        model = Project
+        fields = ['is_published']
+
+
 class SimulationCreateSerializer(serializers.Serializer):
     project_id = serializers.UUIDField(required=True)
 

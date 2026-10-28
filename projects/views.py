@@ -27,6 +27,7 @@ from .serializers import (
     ProjectAdminDetailSerializer,
     ProjectDetailSerializer,
     ProjectListSerializer,
+    ProjectStatusSerializer,
     SimulationAdminSerializer,
     SimulationCreateSerializer,
     SimulationDetailSerializer,
@@ -121,11 +122,7 @@ class ProjectViewSet(RetrieveModelMixin,
 
 
 # handles admin actions for projects
-class ProjectAdminViewSet(ListModelMixin,
-                          RetrieveModelMixin,
-                          CreateModelMixin,
-                          UpdateModelMixin,
-                          GenericViewSet):
+class ProjectAdminViewSet(ModelViewSet):
     
     queryset = Project.objects.prefetch_related('simulations').all()
     permission_classes = [IsAdminUser]
@@ -135,7 +132,6 @@ class ProjectAdminViewSet(ListModelMixin,
     filterset_class = ProjectAdminFilter
 
     def get_serializer_class(self):
-        print(self.action * 10)
         if self.action == 'list':
             return ProjectAdminListSerializer
     
@@ -144,6 +140,9 @@ class ProjectAdminViewSet(ListModelMixin,
 
         if self.action == 'retrieve':
             return ProjectAdminDetailSerializer
+
+        if self.action == 'update_status':
+            return ProjectStatusSerializer
 
         # return ProjectPublicListSerializer
     
@@ -201,6 +200,24 @@ class ProjectAdminViewSet(ListModelMixin,
         return_serializer = ProjectAdminDetailSerializer(project)
         return Response(return_serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        description='Publish or unpublish a specific project',
+        responses={200: ProjectAdminListSerializer}
+    )
+    @action(detail=True, methods=["POST"], url_path='status')
+    def update_status(self, request, pk=None):
+        instance = self.get_object()
+        
+        status_update_serializer = self.get_serializer(
+            instance,
+            data=request.data,
+        )
+        status_update_serializer.is_valid(raise_exception=True)
+        project = status_update_serializer.save()
+        
+        return_serializer = ProjectAdminListSerializer(project)
+        return Response(return_serializer.data, status=status.HTTP_200_OK)
+
 
 # handles regular user actions for simulations
 class SimulationViewSet(ListModelMixin,
@@ -224,7 +241,6 @@ class SimulationViewSet(ListModelMixin,
             )
     
     def get_serializer_class(self):
-        print(self.action)
         if self.action == 'create':
             return SimulationCreateSerializer
 
