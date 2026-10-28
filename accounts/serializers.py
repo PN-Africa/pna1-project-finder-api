@@ -93,7 +93,7 @@ class CustomRegisterSerializer(RegisterSerializer):
         return user
 
 
-class UserAdminListSerializer(CustomUserDetailsSerializer):
+class UserAdminSerializer(CustomUserDetailsSerializer):
     simulations_started = serializers.SerializerMethodField()
     simulations_submitted = serializers.SerializerMethodField()
 

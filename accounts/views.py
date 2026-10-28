@@ -12,7 +12,7 @@ from dj_rest_auth.views import PasswordResetConfirmView
 from drf_spectacular.utils import extend_schema
 
 from core.pagination import CustomPageNumberPagination
-from .serializers import UserAdminListSerializer
+from .serializers import UserAdminSerializer
 
 
 UserModel = get_user_model()
@@ -227,27 +227,14 @@ class UserViewSet(ListModelMixin,
                   RetrieveModelMixin,
                   GenericViewSet):
     
-    queryset = UserModel.objects.all()
-        # .prefetch_related(
-        #     Prefetch(
-        #         'simulations',
-        #         queryset=Simulation.objects.select_related('project').all()
-        #     )
-        # ) \
+    queryset = UserModel.objects.prefetch_related('simulations').all()
     
-    serializer_class = UserAdminListSerializer
+    serializer_class = UserAdminSerializer
     permission_classes = [IsAdminUser]
     pagination_class = CustomPageNumberPagination
-    
-    # def get_serializer_class(self):
-    #     if self.action == 'list':
-    #         return UserAdminListSerializer
-
-    #     if self.action == 'retrieve':
-    #         return UserAdminDetailSerializer
 
     @extend_schema(
-        description="Return a user's details and simulation history"
+        description="Return a specific user's details"
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)

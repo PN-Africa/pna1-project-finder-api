@@ -1,22 +1,32 @@
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.mixins import (
+    ListModelMixin,
+    CreateModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin
+)
 from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 
 
 from core.pagination import CustomPageNumberPagination
 from .models import Project, Simulation, get_choices
-from .filters import ProjectFilter, ProjectAdminFilter, SimulationAdminFilter, SimulationFilter
+from .filters import (
+    ProjectFilter,
+    ProjectAdminFilter,
+    SimulationAdminFilter,
+    SimulationFilter
+)
 from .serializers import (
     ProjectCreateSerializer,
-    ProjectListSerializer,
+    ProjectAdminListSerializer,
+    ProjectAdminDetailSerializer,
     ProjectDetailSerializer,
-    ProjectPublicDetailSerializer,
-    ProjectPublicListSerializer,
+    ProjectListSerializer,
     SimulationAdminSerializer,
     SimulationCreateSerializer,
     SimulationDetailSerializer,
@@ -47,10 +57,10 @@ class ProjectViewSet(RetrieveModelMixin,
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return ProjectPublicListSerializer
+            return ProjectListSerializer
 
         if self.action == 'retrieve':
-            return ProjectPublicDetailSerializer
+            return ProjectDetailSerializer
 
         # return ProjectPublicListSerializer
 
@@ -68,7 +78,7 @@ class ProjectViewSet(RetrieveModelMixin,
             "user (i.e projects that have previously been simulated " 
             "or are currently being simulated by the user are excluded)."
         ),
-        responses={200: ProjectPublicListSerializer(many=True)}
+        responses={200: ProjectListSerializer(many=True)}
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -114,9 +124,10 @@ class ProjectViewSet(RetrieveModelMixin,
 class ProjectAdminViewSet(ListModelMixin,
                           RetrieveModelMixin,
                           CreateModelMixin,
+                          UpdateModelMixin,
                           GenericViewSet):
     
-    queryset = Project.objects.all()
+    queryset = Project.objects.prefetch_related('simulations').all()
     permission_classes = [IsAdminUser]
     pagination_class = CustomPageNumberPagination
     
@@ -124,14 +135,15 @@ class ProjectAdminViewSet(ListModelMixin,
     filterset_class = ProjectAdminFilter
 
     def get_serializer_class(self):
+        print(self.action * 10)
         if self.action == 'list':
-            return ProjectListSerializer
+            return ProjectAdminListSerializer
     
-        if self.action == 'create':
+        if self.action in ['create', 'update', 'partial_update']:
             return ProjectCreateSerializer
 
         if self.action == 'retrieve':
-            return ProjectDetailSerializer
+            return ProjectAdminDetailSerializer
 
         # return ProjectPublicListSerializer
     
@@ -152,20 +164,42 @@ class ProjectAdminViewSet(ListModelMixin,
 
     @extend_schema(
         description=("Creates a project. This action is reserved for admin users"),
-        responses={201: ProjectDetailSerializer},
+        responses={201: ProjectAdminDetailSerializer},
     )
     def create(self, request, *args, **kwargs):
         create_serializer = self.get_serializer(data=request.data)
         create_serializer.is_valid(raise_exception=True)
         project = create_serializer.save()
 
-        return_serializer = ProjectDetailSerializer(project)
+        return_serializer = ProjectAdminDetailSerializer(project)
         headers = self.get_success_headers(return_serializer.data)
         return Response(
             return_serializer.data,
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+
+    @extend_schema(
+        description=(
+            "Edits an existing project. "
+            "This action is reserved for admin users"
+        ),
+        responses={201: ProjectAdminDetailSerializer},
+    )
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        update_serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=partial
+        )
+        update_serializer.is_valid(raise_exception=True)
+        project = update_serializer.save()
+
+        return_serializer = ProjectAdminDetailSerializer(project)
+        return Response(return_serializer.data, status=status.HTTP_200_OK)
 
 
 # handles regular user actions for simulations
@@ -190,6 +224,7 @@ class SimulationViewSet(ListModelMixin,
             )
     
     def get_serializer_class(self):
+        print(self.action)
         if self.action == 'create':
             return SimulationCreateSerializer
 
@@ -270,6 +305,7 @@ class SimulationViewSet(ListModelMixin,
 class SimulationAdminViewSet(ListModelMixin,
                              RetrieveModelMixin,
                              GenericViewSet):
+    
     queryset = Simulation.objects.select_related('user', 'project').all()
     serializer_class = SimulationAdminSerializer
     permission_classes = [IsAdminUser]

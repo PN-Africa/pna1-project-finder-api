@@ -45,3 +45,7 @@ class SimulationAdminFilter(django_filters.FilterSet):
         field_name='user__id',
         lookup_expr='exact',
     )
+    status = django_filters.CharFilter(
+        field_name='status',
+        lookup_expr='iexact',
+    )

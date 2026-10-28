@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
-from accounts.serializers import UserAdminListSerializer
+from accounts.serializers import UserAdminSerializer
 
 from .models import Deliverable, Project, Simulation, Stakeholder, Task
 
@@ -43,7 +43,7 @@ class DeliverableSerializer(serializers.ModelSerializer):
 
 
 # user list
-class ProjectPublicListSerializer(serializers.ModelSerializer):
+class ProjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
@@ -56,10 +56,27 @@ class ProjectPublicListSerializer(serializers.ModelSerializer):
         
 
 # user detail
-class ProjectPublicDetailSerializer(serializers.ModelSerializer):
-    stakeholders = StakeholderSerializer(many=True)
-    tasks = TaskSerializer(many=True)
-    deliverables = DeliverableSerializer(many=True)
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    # stakeholders = StakeholderSerializer(many=True)
+    # tasks = TaskSerializer(many=True)
+    # deliverables = DeliverableSerializer(many=True)
+
+    stakeholders = serializers.SerializerMethodField()
+    tasks = serializers.SerializerMethodField()
+    deliverables = serializers.SerializerMethodField()
+
+    def get_stakeholders(self, instance) -> list[str]:
+        return [s.name for s in instance.stakeholders.all()]
+        return 10
+
+    def get_tasks(self, instance) -> list[str]:
+        return [t.description for t in instance.tasks.all()]
+        return 20
+
+    def get_deliverables(self, instance) -> list[str]:
+        return [d.name for d in instance.deliverables.all()]
+        return 30
+
 
     class Meta:
         model = Project
@@ -67,37 +84,73 @@ class ProjectPublicDetailSerializer(serializers.ModelSerializer):
 
 
 # admin - list
-class ProjectListSerializer(ProjectPublicListSerializer):
-    # is_published = serializers.BooleanField()
+class ProjectAdminListSerializer(ProjectListSerializer):
+    simulations_count = serializers.SerializerMethodField()
 
-    class Meta(ProjectPublicListSerializer.Meta):
+    def get_simulations_count(self, instance) -> int:
+        return instance.simulations.count()
+
+    class Meta(ProjectListSerializer.Meta):
         fields = [
-            *ProjectPublicListSerializer.Meta.fields,
-            'is_published'
+            *ProjectListSerializer.Meta.fields,
+            'is_published',
+            'simulations_count',
         ]
 
 
-# admin - create
+# admin - detail
+class ProjectAdminDetailSerializer(ProjectDetailSerializer):
+    class Meta(ProjectDetailSerializer.Meta):
+        fields = [
+            *ProjectDetailSerializer.Meta.fields,
+            'is_published',
+        ]
+
+
+# admin - create/update
 class ProjectCreateSerializer(serializers.ModelSerializer):
     stakeholders = serializers.ListField(
-        child=serializers.CharField(min_length=2, allow_blank=False,),
+        child=serializers.CharField(max_length=300, allow_blank=False,),
         allow_empty=False,
         required=True,
+        write_only=True,
     )
     tasks = serializers.ListField(
         child=serializers.CharField(max_length=300, allow_blank=False),
         allow_empty=False,
         required=True,
+        write_only=True,
     )
-    deliverables = DeliverableSerializer(
-        many=True,
+    deliverables = serializers.ListField(
+        child=serializers.CharField(max_length=300, allow_blank=False),
         allow_empty=False,
         required=True,
+        write_only=True,
     )
 
     class Meta:
         model = Project
-        fields = [*public_project_fields, 'is_published']
+        fields = [*public_project_fields]
+
+    def _construct_child_objects(self, project, stakeholders, tasks, deliverables):
+        stakeholder_objs = [
+            Stakeholder(name=s, project=project) 
+            for s in stakeholders
+        ]
+        task_objs = [
+            Task(description=t, project=project)
+            for t in tasks
+        ]
+        deliverable_objs = [
+            Deliverable(
+                name=d,
+                # description=d.get('description', None),
+                project=project,
+            )
+            for d in deliverables
+        ]
+
+        return stakeholder_objs, task_objs, deliverable_objs
 
     def create(self, validated_data):
         stakeholders = validated_data.pop('stakeholders', [])
@@ -117,9 +170,9 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             ]
             deliverable_objs = [
                 Deliverable(
-                    name=d.get('name'),
-                    description=d.get('description', None),
+                    name=d,
                     project=project,
+                    # description=d.get('description', None),
                 )
                 for d in deliverables
             ]
@@ -130,13 +183,43 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
         return project
 
+    def update(self, instance, validated_data):
+        stakeholders = validated_data.pop('stakeholders', None)
+        tasks = validated_data.pop('tasks', None)
+        deliverables = validated_data.pop('deliverables', None)
+        
+        with transaction.atomic():
+            for field, value in validated_data.items():
+                setattr(instance, field, value)
 
-class ProjectDetailSerializer(ProjectPublicDetailSerializer):
-    class Meta(ProjectPublicDetailSerializer.Meta):
-        fields = [
-            *ProjectPublicDetailSerializer.Meta.fields,
-            'is_published',
-        ]
+            instance.save()
+
+            if stakeholders is not None:
+                instance.stakeholders.all().delete()
+                Stakeholder.objects.bulk_create([
+                    Stakeholder(name=s, project=instance) 
+                    for s in stakeholders
+                ])
+
+            if tasks is not None:
+                instance.tasks.all().delete()
+                Task.objects.bulk_create([
+                    Task(description=t, project=instance)
+                    for t in tasks
+                ])
+
+            if deliverables is not None:
+                instance.deliverables.all().delete()
+                Deliverable.objects.bulk_create([
+                    Deliverable(
+                        name=d,
+                        project=instance,
+                        # description=d.get('description', None),
+                    )
+                    for d in deliverables
+                ])
+
+        return instance
 
 
 class SimulationCreateSerializer(serializers.Serializer):
@@ -175,7 +258,7 @@ class SimulationCreateSerializer(serializers.Serializer):
 
 
 class SimulationListSerializer(serializers.ModelSerializer):
-    project = ProjectPublicListSerializer(read_only=True)
+    project = ProjectListSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
     submitted_deliverables_count = serializers.SerializerMethodField()
 
@@ -196,7 +279,7 @@ class SimulationListSerializer(serializers.ModelSerializer):
 
 
 class SimulationDetailSerializer(SimulationListSerializer):
-    project = ProjectPublicDetailSerializer(read_only=True)
+    project = ProjectDetailSerializer(read_only=True)
 
     
 class SimulationSubmitSerializer(serializers.Serializer):
@@ -242,7 +325,7 @@ class ChoicesResponseSerializer(serializers.Serializer):
 
 
 class SimulationAdminSerializer(SimulationListSerializer):
-    user = UserAdminListSerializer(read_only=True)
+    user = UserAdminSerializer(read_only=True)
 
     class Meta(SimulationListSerializer.Meta):
         parent_fields = [*SimulationListSerializer.Meta.fields]
