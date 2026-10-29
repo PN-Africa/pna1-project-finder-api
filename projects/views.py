@@ -351,6 +351,7 @@ class SimulationAdminViewSet(ListModelMixin,
 
 class DeliverableSubmissionViewSet(ModelViewSet):
     serializer_class = DeliverableSubmissionSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         simulation = self.get_simulation()
@@ -373,4 +374,57 @@ class DeliverableSubmissionViewSet(ModelViewSet):
         simulation = self.get_simulation()
         serializer.save(simulation=simulation)
 
+    @extend_schema(
+        description='Returns a list of file uploads for the referenced simulation'
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        description='Returns a specific file upload'
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        description='Uploads a new file for the referenced simulation'
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(
+        description='Replaces the file uploads for a given upload'
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @extend_schema(
+        description='Deletes/removes a file upload'
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+
+class DeliverableSubmissionAdminViewSet(ListModelMixin,
+                                        RetrieveModelMixin,
+                                        GenericViewSet):
     
+    serializer_class = DeliverableSubmissionSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return DeliverableSubmission.objects.filter(
+            simulation_id=self.kwargs['simulation_pk'],
+        )
+
+    @extend_schema(
+        description='Returns a list of file uploads for the referenced simulation'
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        description='Returns a specific file upload'
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
