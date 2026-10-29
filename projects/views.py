@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.mixins import (
     ListModelMixin,
     CreateModelMixin,
@@ -14,7 +15,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 
 from core.pagination import CustomPageNumberPagination
-from .models import Project, Simulation, get_choices
+from .models import DeliverableSubmission, Project, Simulation, get_choices
 from .filters import (
     ProjectFilter,
     ProjectAdminFilter,
@@ -22,6 +23,7 @@ from .filters import (
     SimulationFilter
 )
 from .serializers import (
+    DeliverableSubmissionSerializer,
     ProjectCreateSerializer,
     ProjectAdminListSerializer,
     ProjectAdminDetailSerializer,
@@ -347,4 +349,28 @@ class SimulationAdminViewSet(ListModelMixin,
         return super().retrieve(request, *args, **kwargs)
 
 
+class DeliverableSubmissionViewSet(ModelViewSet):
+    serializer_class = DeliverableSubmissionSerializer
 
+    def get_queryset(self):
+        simulation = self.get_simulation()
+
+        return DeliverableSubmission.objects.filter(
+            simulation_id=simulation.id,
+            simulation__user=self.request.user
+        )
+
+    def get_simulation(self):
+        try:
+            return Simulation.objects.get(
+                pk=self.kwargs['simulation_pk'],
+                user=self.request.user
+            )
+        except Simulation.DoesNotExist:
+            raise NotFound('Simulation does not exist.')
+
+    def perform_create(self, serializer):
+        simulation = self.get_simulation()
+        serializer.save(simulation=simulation)
+
+    

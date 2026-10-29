@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -5,7 +7,7 @@ from rest_framework import serializers
 
 from accounts.serializers import UserAdminSerializer
 
-from .models import Deliverable, Project, Simulation, Stakeholder, Task
+from .models import Deliverable, DeliverableSubmission, Project, Simulation, Stakeholder, Task
 
 
 public_project_fields = [
@@ -295,8 +297,55 @@ class SimulationListSerializer(serializers.ModelSerializer):
         ]
 
 
+# deliverable file upload serializer
+class DeliverableSubmissionSerializer(serializers.ModelSerializer):
+    uploaded_at = serializers.DateTimeField(read_only=True)
+    filename = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    size_kb = serializers.SerializerMethodField()
+
+    def get_filename(self, instance) -> str:
+        return Path(instance.file.name).name if instance.file else ''
+
+    def get_file_extension(self, instance) -> str:
+        return Path(instance.file.name).suffix.lower() if instance.file else ''
+
+    def get_size_kb(self, instance) -> int | None:
+        if instance.file:
+            return round(instance.file.size / 1024, 2)
+
+    def validate_file(self, file):
+        if file.size > DeliverableSubmission.MAX_SIZE_BYTES:
+            raise serializers.ValidationError(
+                'File size must not exceed 10MB'
+            )
+
+        return file
+
+    class Meta:
+        model = DeliverableSubmission
+        fields = [
+            'id',
+            'file',
+            'filename',
+            'file_extension',
+            'size_kb',
+            'uploaded_at'
+        ]
+
+
 class SimulationDetailSerializer(SimulationListSerializer):
     project = ProjectDetailSerializer(read_only=True)
+    uploads = DeliverableSubmissionSerializer(
+        source='deliverable_submissions',
+        many=True,
+    )
+
+    class Meta(SimulationListSerializer.Meta):
+        fields = [
+            *SimulationListSerializer.Meta.fields,
+            'uploads',
+        ]
 
     
 class SimulationSubmitSerializer(serializers.Serializer):
@@ -349,3 +398,5 @@ class SimulationAdminSerializer(SimulationListSerializer):
         f = [field for field in parent_fields if field != 'user_id']
 
         fields = [*f, 'user']
+
+

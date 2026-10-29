@@ -78,11 +78,13 @@ class Simulation(BaseModel):
 
 
 class DeliverableSubmission(BaseModel):
+    MAX_SIZE_BYTES = 10 * 1024 * 1024
+
     simulation = models.ForeignKey(
         Simulation,
         on_delete=models.CASCADE,
         related_name='deliverable_submissions'
     )
-    file = models.CharField(max_length=300, default="/default_file.pdf")
-    # add proper file field
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    # file = models.CharField(max_length=300, default="/default_file.pdf")
+    file = models.FileField(upload_to='deliverables/')
+    uploaded_at = models.DateTimeField(auto_now=True)
