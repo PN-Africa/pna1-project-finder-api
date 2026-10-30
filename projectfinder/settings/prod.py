@@ -81,19 +81,23 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-B2_CORE_CONFIG = {
-    'access_key': os.getenv('B2_APPLICATION_KEY_ID'),
-    'secret_key': os.getenv('B2_APPLICATION_KEY'),
-    'bucket_name': os.getenv('B2_BUCKET_NAME'),
-    'region_name': os.getenv('B2_BUCKET_REGION', ''),
-    'endpoint_url': os.getenv('B2_BUCKET_ENDPOINT_URL', ''),
-}
+# B2_CORE_CONFIG = {
+#     'access_key': os.getenv('B2_APPLICATION_KEY_ID'),
+#     'secret_key': os.getenv('B2_APPLICATION_KEY'),
+#     'bucket_name': os.getenv('B2_BUCKET_NAME'),
+#     'region_name': os.getenv('B2_BUCKET_REGION', ''),
+#     'endpoint_url': os.getenv('B2_BUCKET_ENDPOINT_URL', ''),
+# }
 
 STORAGES = {
     'default': {
         'BACKEND': 'storages.backends.s3.S3Storage',
         'OPTIONS': {
-            **B2_CORE_CONFIG,
+            'access_key': os.getenv('B2_APPLICATION_KEY_ID'),
+            'secret_key': os.getenv('B2_APPLICATION_KEY'),
+            'bucket_name': os.getenv('B2_BUCKET_NAME'),
+            'region_name': os.getenv('B2_BUCKET_REGION', ''),
+            'endpoint_url': os.getenv('B2_BUCKET_ENDPOINT_URL', ''),
             'location': 'media',
             'file_overwrite': False,
             'default_acl': None,
@@ -102,14 +106,7 @@ STORAGES = {
         },
     },
    'staticfiles': {
-        'BACKEND': 'storages.backends.s3.S3Storage',
-        'OPTIONS': {
-            **B2_CORE_CONFIG,
-            'location': 'static',
-            'file_overwrite': True,
-            'default_acl': None,
-            'querystring_auth': False,
-        }
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
