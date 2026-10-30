@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
@@ -37,6 +38,7 @@ from .serializers import (
     SimulationSubmitSerializer,
     SimulationSubmitResponseSerializer,
     ChoicesResponseSerializer,
+    StatsSerializer,
 )
 
 # handles regular user actions for projects
@@ -428,3 +430,17 @@ class DeliverableSubmissionAdminViewSet(ListModelMixin,
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+
+class StatsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        description=(
+            'Returns dashboard statistics for projects and simulations.'
+        ),
+        responses={200: StatsSerializer}
+    )
+    def get(self, request):
+        serializer = StatsSerializer({})
+        return Response(serializer.data, status=status.HTTP_200_OK)

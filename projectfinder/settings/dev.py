@@ -36,22 +36,23 @@ SIMPLE_JWT = {
 }
 
 # for testing - comment this out to use local storage
-STORAGES = {
-    'default': {
-        'BACKEND': 'storages.backends.s3.S3Storage',
-        'OPTIONS': {
-            'access_key': os.getenv('B2_APPLICATION_KEY_ID'),
-            'secret_key': os.getenv('B2_APPLICATION_KEY'),
-            'bucket_name': os.getenv('B2_BUCKET_NAME'),
-            'region_name': os.getenv('B2_BUCKET_REGION', ''),
-            'endpoint_url': os.getenv('B2_BUCKET_ENDPOINT_URL', ''),
-            'file_overwrite': False,
-            'default_acl': None,
-            'querystring_auth': True,
-            'querystring_expire': 3600,
+if os.getenv('USE_B2_STORAGE', 'False').lower() == 'true':
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'access_key': os.getenv('B2_APPLICATION_KEY_ID'),
+                'secret_key': os.getenv('B2_APPLICATION_KEY'),
+                'bucket_name': os.getenv('B2_BUCKET_NAME'),
+                'region_name': os.getenv('B2_BUCKET_REGION', ''),
+                'endpoint_url': os.getenv('B2_BUCKET_ENDPOINT_URL', ''),
+                'file_overwrite': False,
+                'default_acl': None,
+                'querystring_auth': True,
+                'querystring_expire': 3600,
+            },
         },
-    },
-    'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-    },
-}
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }

@@ -400,3 +400,20 @@ class SimulationAdminSerializer(SimulationListSerializer):
         fields = [*f, 'user']
 
 
+class StatsSerializer(serializers.Serializer):
+    projects_count = serializers.SerializerMethodField()
+    simulations_in_progress = serializers.SerializerMethodField()
+    simulations_submitted = serializers.SerializerMethodField()
+
+    def get_projects_count(self, instance) -> int:
+        return Project.objects.count()
+
+    def get_simulations_in_progress(self, instance) -> int:
+        return Simulation.objects.filter(
+            status=Simulation.Status.IN_PROGRESS
+        ).count()
+
+    def get_simulations_submitted(self, instance) -> int:
+        return Simulation.objects.filter(
+            status=Simulation.Status.SUBMITTED
+        ).count()

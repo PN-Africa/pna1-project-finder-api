@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
-from .views import DeliverableSubmissionAdminViewSet, DeliverableSubmissionViewSet, ProjectAdminViewSet, ProjectViewSet, SimulationAdminViewSet, SimulationViewSet
+from .views import DeliverableSubmissionAdminViewSet, DeliverableSubmissionViewSet, ProjectAdminViewSet, ProjectViewSet, SimulationAdminViewSet, SimulationViewSet, StatsView
 
 
 router = SimpleRouter()
@@ -24,5 +24,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(simulations_router.urls)),
     path('admin/', include(admin_router.urls)),
-    path('admin/', include(admin_simulations_router.urls))
+    path('admin/', include(admin_simulations_router.urls)),
+    path('admin/stats/', StatsView.as_view(), name='stats'),
 ]
