@@ -14,11 +14,6 @@ from core.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(
-        'password-reset/confirm/<str:uidb64>/<str:token>/',
-        PasswordResetConfirmRedirectView.as_view(),
-        name='password_reset_confirm',
-    ),
     
     path('healthz/', health_check, name='healthz'),
     path('api/health/', health_check, name='health_check'),

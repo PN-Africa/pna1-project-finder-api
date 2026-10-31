@@ -59,7 +59,7 @@ ROOT_URLCONF = 'projectfinder.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -161,12 +161,14 @@ REST_AUTH = {
     'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
     'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
     'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
+    'PASSWORD_RESET_SERIALIZER': 'accounts.serializers.CustomPasswordResetSerializer',
 }
 
 # Django Allauth
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
+ACCOUNT_ADAPTER = 'accounts.adapter.CustomAccountAdapter'
 
 # Django Rest Framework Simple JWT
 SIMPLE_JWT = {
@@ -183,6 +185,15 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
 }
+
+# Frontend Configuration
+FRONTEND_PASSWORD_RESET_URL = os.getenv('FRONTEND_PASSWORD_RESET_URL')
+FRONTEND_VERIFY_EMAIL_URL = os.getenv('FRONTEND_VERIFY_EMAIL_URL')
+
+#Email Config
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@projectfinder.com')
+
+
 
 
 

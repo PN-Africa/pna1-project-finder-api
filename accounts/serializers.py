@@ -1,26 +1,26 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from rest_framework import serializers
 from dj_rest_auth.serializers import LoginSerializer, UserDetailsSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
+from dj_rest_auth.serializers import PasswordResetSerializer
+from allauth.account.utils import user_pk_to_url_str
 
 from projects.models import Simulation
+
+def custom_url_generator(request, user, token):
+    uid = user_pk_to_url_str(user)
+
+    return settings.FRONTEND_PASSWORD_RESET_URL.format(uid=uid, token=token)
 
 
 UserModel = get_user_model()
 
-# from accounts.models import Profile
-
-
-# class ProfileSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Profile
-#         fields = ['professional_role']
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     registered_at = serializers.DateTimeField(source='date_joined', read_only=True)
     is_admin = serializers.BooleanField(source='is_staff', read_only=True)
-    # profile = ProfileSerializer()
 
     class Meta(UserDetailsSerializer.Meta):
         fields = [
@@ -32,31 +32,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             'registered_at',
             'is_admin',
             'professional_role'
-            # 'profile',
         ]
-
-    # def update(self, instance, validated_data):
-    #     # print("vd", validated_data)
-    #     profile_data = validated_data.pop('profile', None)
-
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-
-    #     instance.save()
-
-    #     print("pd", profile_data)
-    #     if profile_data is not None:
-    #         profile, _ = Profile.objects.get_or_create(user=instance)
-
-    #         print(profile)
-
-    #         for attr, value in profile_data.items():
-    #             setattr(profile, attr, value)
-
-    #         print(profile)
-    #         profile.save()
-
-    #     return instance
 
 
 class CustomLoginSerializer(LoginSerializer):
@@ -113,11 +89,6 @@ class UserAdminSerializer(CustomUserDetailsSerializer):
         ]
 
 
-# class UserAdminDetailSerializer(CustomUserDetailsSerializer):
-#     # simulations = SimulationListSerializer(many=True, read_only=True)
-
-#     class Meta(CustomUserDetailsSerializer.Meta):
-#         fields = [
-#             *CustomUserDetailsSerializer.Meta.fields,
-#             # 'simulations',
-#         ]
+class CustomPasswordResetSerializer(PasswordResetSerializer):
+    def get_email_options(self):
+        return {'url_generator': custom_url_generator}
