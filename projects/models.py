@@ -36,7 +36,7 @@ class Project(BaseModel):
 
     industry = models.CharField(max_length=255, choices=Industry.choices)
     difficulty_level = models.CharField(max_length=255, choices=DifficultyLevel.choices)
-    # brief_doc - Project brief document (PDF, DOCX, etc.)
+    brief = models.FileField(upload_to='briefs/', null=True)
 
 
 class Stakeholder(BaseModel):
@@ -85,6 +85,5 @@ class DeliverableSubmission(BaseModel):
         on_delete=models.CASCADE,
         related_name='deliverable_submissions'
     )
-    # file = models.CharField(max_length=300, default="/default_file.pdf")
     file = models.FileField(upload_to='deliverables/')
     uploaded_at = models.DateTimeField(auto_now=True)

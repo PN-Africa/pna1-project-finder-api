@@ -23,6 +23,7 @@ public_project_fields = [
         'stakeholders',
         'tasks',
         'deliverables',
+        'brief',
     ]
 
 
@@ -69,15 +70,12 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
 
     def get_stakeholders(self, instance) -> list[str]:
         return [s.name for s in instance.stakeholders.all()]
-        return 10
 
     def get_tasks(self, instance) -> list[str]:
         return [t.description for t in instance.tasks.all()]
-        return 20
 
     def get_deliverables(self, instance) -> list[str]:
         return [d.name for d in instance.deliverables.all()]
-        return 30
 
 
     class Meta:
@@ -129,30 +127,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         required=True,
         write_only=True,
     )
+    brief = serializers.FileField(required=False)
 
     class Meta:
         model = Project
         fields = [*public_project_fields]
-
-    def _construct_child_objects(self, project, stakeholders, tasks, deliverables):
-        stakeholder_objs = [
-            Stakeholder(name=s, project=project) 
-            for s in stakeholders
-        ]
-        task_objs = [
-            Task(description=t, project=project)
-            for t in tasks
-        ]
-        deliverable_objs = [
-            Deliverable(
-                name=d,
-                # description=d.get('description', None),
-                project=project,
-            )
-            for d in deliverables
-        ]
-
-        return stakeholder_objs, task_objs, deliverable_objs
 
     def create(self, validated_data):
         stakeholders = validated_data.pop('stakeholders', [])
