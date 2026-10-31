@@ -172,6 +172,9 @@ ACCOUNT_ADAPTER = 'accounts.adapter.CustomAccountAdapter'
 
 # Django Rest Framework Simple JWT
 SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(
+        minutes=int(os.getenv('ACCESS_TOKEN_LIFETIME_MINUTES', '7200'))
+    ),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

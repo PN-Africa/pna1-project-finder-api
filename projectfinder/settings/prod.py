@@ -67,11 +67,6 @@ REST_AUTH = {
     'JWT_AUTH_SECURE': True,
 }
 
-SIMPLE_JWT = {
-    **SIMPLE_JWT,
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-}
-
 # HTTPS and security headers
 # SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() == 'true'
 SECURE_SSL_REDIRECT = True

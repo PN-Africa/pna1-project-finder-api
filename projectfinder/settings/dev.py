@@ -30,12 +30,6 @@ MAILERS = {
     },
 }
 
-SIMPLE_JWT = {
-    **SIMPLE_JWT,
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
-}
-
-# for testing - comment this out to use local storage
 if os.getenv('USE_B2_STORAGE', 'False').lower() == 'true':
     STORAGES = {
         'default': {
