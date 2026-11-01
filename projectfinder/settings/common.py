@@ -204,7 +204,8 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@projectfinder.com'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 ANYMAIL = {
-    'RESEND_API_KEY': os.getenv('RESEND_API_KEY'),
+    # 'RESEND_API_KEY': os.getenv('RESEND_API_KEY'),
+    'BREVO_API_KEY': os.getenv('BREVO_API_KEY'),
 }
 
 

@@ -27,7 +27,8 @@ CORS_ALLOW_CREDENTIALS = True
 MAILERS = {
     'default': {
         # 'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-        'BACKEND': 'anymail.backends.resend.EmailBackend',
+        # 'BACKEND': 'anymail.backends.resend.EmailBackend',
+        'BACKEND': 'anymail.backends.brevo.EmailBackend',
     },
 }
 
