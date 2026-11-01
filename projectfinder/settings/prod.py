@@ -37,7 +37,8 @@ DATABASES = {
 
 MAILERS = {
     'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        # 'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        'BACKEND': 'anymail.backends.resend.EmailBackend',
     },
 }
 

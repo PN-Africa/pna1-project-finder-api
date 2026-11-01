@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'django_filters',
     'storages',
+    'anymail',
 
     'accounts',
     'core',
@@ -200,8 +201,11 @@ FRONTEND_VERIFY_EMAIL_URL = os.getenv('FRONTEND_VERIFY_EMAIL_URL')
 
 #Email Config
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@projectfinder.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-
+ANYMAIL = {
+    'RESEND_API_KEY': os.getenv('RESEND_API_KEY'),
+}
 
 
 
