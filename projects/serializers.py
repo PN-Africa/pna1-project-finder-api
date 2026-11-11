@@ -60,9 +60,6 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 # user detail
 class ProjectDetailSerializer(serializers.ModelSerializer):
-    # stakeholders = StakeholderSerializer(many=True)
-    # tasks = TaskSerializer(many=True)
-    # deliverables = DeliverableSerializer(many=True)
 
     stakeholders = serializers.SerializerMethodField()
     tasks = serializers.SerializerMethodField()
@@ -95,6 +92,7 @@ class ProjectAdminListSerializer(ProjectListSerializer):
             *ProjectListSerializer.Meta.fields,
             'is_published',
             'simulations_count',
+            'created_at',
         ]
 
 
@@ -104,6 +102,7 @@ class ProjectAdminDetailSerializer(ProjectDetailSerializer):
         fields = [
             *ProjectDetailSerializer.Meta.fields,
             'is_published',
+            'created_at',
         ]
 
 
@@ -225,28 +224,29 @@ class SimulationCreateSerializer(serializers.Serializer):
 
     def validate_project_id(self, project_id):
         user = self.context['user']
+
+        try:
+            project = Project.objects.get(
+                pk=project_id,
+                is_published=True,
+            )
+        except Project.DoesNotExist:
+            raise serializers.ValidationError(
+                'Invalid project ID'
+            )
+
         has_existing_simulation = Simulation.objects.filter(
             user=user,
-            project_id=project_id
+            project_id=project.id
         ).exists()
 
         if has_existing_simulation:
             raise serializers.ValidationError(
-                "The current user already has a simulation for the "
+                "A simulation already exists for the "
                 "referenced project"
             )
 
-        is_unpublished_project = Project.objects.filter(
-            id=project_id,
-            is_published=False,
-        ).exists()
-
-        if is_unpublished_project:
-            raise serializers.ValidationError(
-                "Invalid project id."
-            )
-
-        return project_id
+        return project.id
 
     def create(self, validated_data):
         return Simulation.objects.create(
@@ -339,7 +339,7 @@ class SimulationSubmitSerializer(serializers.Serializer):
         upload_count = instance.deliverable_submissions.count()
         if upload_count < 1:
             raise serializers.ValidationError(
-                'Upload at least one deliverable file before submission.'
+                {'detail': 'Upload at least one deliverable file before submission.'}
             )
 
         instance.submitted_at = timezone.now()
