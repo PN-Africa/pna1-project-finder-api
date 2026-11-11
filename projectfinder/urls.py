@@ -9,7 +9,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-from accounts.views import PasswordResetConfirmRedirectView
 from core.views import health_check
 
 urlpatterns = [

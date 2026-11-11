@@ -58,7 +58,8 @@ class ProjectViewSet(RetrieveModelMixin,
 
         return Project.objects \
             .filter(is_published=True) \
-            .exclude(id__in=simulated_project_ids)
+            .exclude(id__in=simulated_project_ids) \
+            .order_by('-created_at', '-id')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -128,7 +129,11 @@ class ProjectViewSet(RetrieveModelMixin,
 # handles admin actions for projects
 class ProjectAdminViewSet(ModelViewSet):
     
-    queryset = Project.objects.prefetch_related('simulations').all()
+    queryset = Project.objects \
+        .prefetch_related('simulations') \
+        .order_by('-created_at', '-id') \
+        .all()
+    
     permission_classes = [IsAdminUser]
     pagination_class = CustomPageNumberPagination
     
@@ -242,7 +247,8 @@ class SimulationViewSet(ListModelMixin,
                 'project__stakeholders',
                 'project__tasks',
                 'project__deliverables',
-            )
+            ) \
+            .order_by('-started_at', '-id')
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -326,7 +332,11 @@ class SimulationAdminViewSet(ListModelMixin,
                              RetrieveModelMixin,
                              GenericViewSet):
     
-    queryset = Simulation.objects.select_related('user', 'project').all()
+    queryset = Simulation.objects \
+        .select_related('user', 'project') \
+        .order_by('-started_at', '-id') \
+        .all()
+    
     serializer_class = SimulationAdminSerializer
     permission_classes = [IsAdminUser]
 
@@ -358,10 +368,13 @@ class DeliverableSubmissionViewSet(ModelViewSet):
     def get_queryset(self):
         simulation = self.get_simulation()
 
-        return DeliverableSubmission.objects.filter(
-            simulation_id=simulation.id,
-            simulation__user=self.request.user
-        )
+        return DeliverableSubmission.objects \
+            .filter(
+                simulation_id=simulation.id,
+                simulation__user=self.request.user
+            ) \
+            .order_by('-uploaded_at', '-id')
+    
 
     def get_simulation(self):
         try:
@@ -415,9 +428,9 @@ class DeliverableSubmissionAdminViewSet(ListModelMixin,
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
-        return DeliverableSubmission.objects.filter(
-            simulation_id=self.kwargs['simulation_pk'],
-        )
+        return DeliverableSubmission.objects \
+            .filter(simulation_id=self.kwargs['simulation_pk'],) \
+            .order_by('uploaded_at')  
 
     @extend_schema(
         description='Returns a list of file uploads for the referenced simulation'

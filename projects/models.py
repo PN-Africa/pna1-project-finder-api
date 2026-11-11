@@ -33,10 +33,10 @@ class Project(BaseModel):
     professional_role = models.CharField(max_length=255)
     is_published = models.BooleanField(default=False)
     duration_in_days = models.PositiveIntegerField(null=True)
-
     industry = models.CharField(max_length=255, choices=Industry.choices)
     difficulty_level = models.CharField(max_length=255, choices=DifficultyLevel.choices)
     brief = models.FileField(upload_to='briefs/', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Stakeholder(BaseModel):
