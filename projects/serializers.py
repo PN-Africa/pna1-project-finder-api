@@ -301,6 +301,7 @@ class DeliverableSubmissionSerializer(serializers.ModelSerializer):
 
         return file
 
+
     class Meta:
         model = DeliverableSubmission
         fields = [
@@ -335,6 +336,11 @@ class SimulationSubmitSerializer(serializers.Serializer):
             )
 
         # validate deliverables have been submitted -- yet to be done
+        upload_count = instance.deliverable_submissions.count()
+        if upload_count < 1:
+            raise serializers.ValidationError(
+                'Upload at least one deliverable file before submission.'
+            )
 
         instance.submitted_at = timezone.now()
         instance.status = Simulation.Status.SUBMITTED
