@@ -301,7 +301,6 @@ class DeliverableSubmissionSerializer(serializers.ModelSerializer):
 
         return file
 
-
     class Meta:
         model = DeliverableSubmission
         fields = [

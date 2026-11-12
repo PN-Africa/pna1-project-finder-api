@@ -4,12 +4,11 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.mixins import (
     ListModelMixin,
     CreateModelMixin,
     RetrieveModelMixin,
-    UpdateModelMixin
 )
 from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
@@ -374,7 +373,6 @@ class DeliverableSubmissionViewSet(ModelViewSet):
                 simulation__user=self.request.user
             ) \
             .order_by('-uploaded_at', '-id')
-    
 
     def get_simulation(self):
         try:
@@ -385,9 +383,28 @@ class DeliverableSubmissionViewSet(ModelViewSet):
         except Simulation.DoesNotExist:
             raise NotFound('Simulation does not exist.')
 
-    def perform_create(self, serializer):
+    def check_simulation_status(self):
         simulation = self.get_simulation()
+
+        if simulation.status == Simulation.Status.SUBMITTED:
+            raise PermissionDenied(
+                "This simulation has already been submitted. "
+                "It's deliverables can no longer be modified."
+            )
+
+        return simulation
+
+    def perform_create(self, serializer):
+        simulation = self.check_simulation_status()
         serializer.save(simulation=simulation)
+
+    def perform_update(self, serializer):
+        self.check_simulation_status()
+        return super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        self.check_simulation_status()
+        return super().perform_destroy(instance)
 
     @extend_schema(
         description='Returns a list of file uploads for the referenced simulation'
