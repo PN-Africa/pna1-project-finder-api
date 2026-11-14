@@ -12,7 +12,10 @@ from projects.models import Simulation
 def custom_url_generator(request, user, token):
     uid = user_pk_to_url_str(user)
 
-    return settings.FRONTEND_PASSWORD_RESET_URL.format(uid=uid, token=token)
+    base_url = settings.FRONTEND_BASE_URL
+    password_reset_path = settings.FRONTEND_PASSWORD_RESET_PATH
+
+    return (base_url + password_reset_path).format(uid=uid, token=token)
 
 
 UserModel = get_user_model()
