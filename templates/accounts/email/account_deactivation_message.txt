@@ -1,0 +1,10 @@
+Hello {{ user.first_name }},
+
+Your Project Finder account has been successfully deactivated.
+
+Your account is now inactive, and you will no longer be able to access your account until it is reactivated.
+
+If you did not request this change, please contact our support team.
+
+Thank you,
+The Project Finder Team

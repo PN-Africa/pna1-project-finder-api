@@ -1,0 +1,10 @@
+Hello {{ name }},
+
+Your Project Finder account has been successfully deleted.
+
+We are sorry to see you go. Thank you for being part of Project Finder.
+
+If you did not request this action, please contact our support team.
+
+Regards,
+The Project Finder Team

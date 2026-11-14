@@ -92,3 +92,19 @@ class UserAdminSerializer(CustomUserDetailsSerializer):
 class CustomPasswordResetSerializer(PasswordResetSerializer):
     def get_email_options(self):
         return {'url_generator': custom_url_generator}
+
+
+class VerifyPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        trim_whitespace=False,
+    )
+
+    def validate_password(self, password):
+        user = self.context['user']
+
+        if not user.check_password(password):
+            raise serializers.ValidationError('Incorrect Password')
+
+        return password

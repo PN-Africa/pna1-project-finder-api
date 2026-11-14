@@ -67,8 +67,6 @@ class ProjectViewSet(RetrieveModelMixin,
         if self.action == 'retrieve':
             return ProjectDetailSerializer
 
-        # return ProjectPublicListSerializer
-
     @extend_schema(
         description=("Returns a specific project to an authenticated user")
     )
@@ -87,24 +85,6 @@ class ProjectViewSet(RetrieveModelMixin,
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-
-        # # build queryset
-        # simulations = Simulation.objects.filter(user=request.user)
-        # simulated_project_ids = [s.project_id for s in simulations]
-        # published_projects = self.get_queryset() \
-        #     .filter(is_published=True) \
-        #     .exclude(id__in=simulated_project_ids)
-
-        # queryset = self.filter_queryset(published_projects)
-
-        # # build and return response
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     serializer = self.get_serializer(page, many=True)
-        #     return self.get_paginated_response(serializer.data)
-
-        # serializer = self.get_serializer(queryset, many=True)
-        # return Response(serializer.data)
 
     @extend_schema(
         description=(

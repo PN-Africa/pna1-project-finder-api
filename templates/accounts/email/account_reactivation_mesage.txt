@@ -1,0 +1,11 @@
+Hello {{ user.first_name }},
+
+Your Project Finder account has been successfully reactivated.
+
+You can now log in and continue using Project Finder.
+
+If you did not request this change, please contact our support team immediately.
+
+Welcome back!
+
+The Project Finder Team

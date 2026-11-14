@@ -16,11 +16,13 @@ urlpatterns = [
     
     path('healthz/', health_check, name='healthz'),
     path('api/health/', health_check, name='health_check'),
+    
+    path('api/', include('projects.urls')),
+    path('api/', include('accounts.urls')),
+
     path('api/auth/', include('dj_rest_auth.urls')),
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
 
-    path('api/', include('projects.urls')),
-    path('api/', include('accounts.urls')),
    
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
