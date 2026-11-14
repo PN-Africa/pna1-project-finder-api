@@ -168,7 +168,7 @@ REST_AUTH = {
 
 # Django Allauth
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 ACCOUNT_ADAPTER = 'accounts.adapter.CustomAccountAdapter'
 
