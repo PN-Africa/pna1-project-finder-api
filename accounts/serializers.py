@@ -86,6 +86,8 @@ class UserAdminSerializer(CustomUserDetailsSerializer):
             *CustomUserDetailsSerializer.Meta.fields,
             'simulations_started',
             'simulations_submitted',
+            'is_active',
+            'deactivated_at',
         ]
 
 
